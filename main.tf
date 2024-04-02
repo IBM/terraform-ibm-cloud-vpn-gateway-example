@@ -19,12 +19,16 @@ resource "ibm_is_vpn_gateway" "vpn_gateway" {
   mode   = var.mode
 }
 
+locals {
+  cse_cidrs = ["166.8.0.0/14", "161.26.0.0/16"]
+}
+
 resource "ibm_is_vpn_gateway_connection" "vpn_conn" {
   name          = "my-vpngateway-connection"
   vpn_gateway   = ibm_is_vpn_gateway.vpn_gateway.id
   peer_address  = var.peer_address
   preshared_key = var.preshared_key
-  local_cidrs   = var.mode == "route" ? null : (length(var.local_cidrs) > 0 ? var.local_cidrs : [for ap in data.ibm_is_vpc_address_prefixes.vpc-addresses.address_prefixes: ap.cidr])
+  local_cidrs   = var.mode == "route" ? null : (length(var.local_cidrs) > 0 ? var.local_cidrs : concat(local.cse_cidrs, [for ap in data.ibm_is_vpc_address_prefixes.vpc-addresses.address_prefixes: ap.cidr]))
   peer_cidrs    = var.mode == "route" ? null : var.peer_cidrs
 }
 
