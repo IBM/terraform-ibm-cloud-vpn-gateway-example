@@ -13,13 +13,6 @@ resource "ibm_is_subnet" "subnet" {
   total_ipv4_address_count = 256
 }
 
-resource "ibm_is_subnet" "subnet2" {
-  name                     = "my-subnet2"
-  vpc                      = ibm_is_vpc.vpc.id
-  zone                     = var.zone_name
-  total_ipv4_address_count = 256
-}
-
 resource "ibm_is_vpn_gateway" "vpn_gateway" {
   name   = "my-vpngateway"
   subnet = ibm_is_subnet.subnet.id
@@ -31,7 +24,7 @@ resource "ibm_is_vpn_gateway_connection" "vpn_conn" {
   vpn_gateway   = ibm_is_vpn_gateway.vpn_gateway.id
   peer_address  = var.peer_address
   preshared_key = var.preshared_key
-  local_cidrs   = var.mode == "route" ? null : (length(var.local_cidrs) > 0 ? var.local_cidrs : [ibm_is_subnet.subnet.ipv4_cidr_block, ibm_is_subnet.subnet2.ipv4_cidr_block])
+  local_cidrs   = var.mode == "route" ? null : (length(var.local_cidrs) > 0 ? var.local_cidrs : [for ap in data.ibm_is_vpc_address_prefixes.vpc-addresses.address_prefixes: ap.cidr])
   peer_cidrs    = var.mode == "route" ? null : var.peer_cidrs
 }
 
